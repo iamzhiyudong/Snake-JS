@@ -1,0 +1,295 @@
+﻿<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我的贪吃蛇</title>
+
+    <!-- 链入文件 -->
+    <style>
+        body {
+            background-color: #808080;
+
+        }
+
+        div {
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            background-color: white;
+        }
+
+        .box {
+            width: 400px;
+            height: 510px;
+            border: 1px solid black;
+            text-align: center;
+            margin: 100px 0 0 35%;
+        }
+
+        #div_score {
+            width: 400px;
+            height: 20px;
+            background-color: brown;
+        }
+
+        #canv {
+            border: 2px solid gray;
+        }
+
+        .btn_begin {
+            width: 380px;
+            height: 40px;
+            background-color: #2e9f6f;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 5px;
+            outline: none;
+
+        }
+
+        .btn_reset {
+            width: 380px;
+            height: 38px;
+            background-color: #2e9f6f;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 5px;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+
+        <div id="div_score"></div>
+        <!--显示分数的div-->
+        <canvas id="canv" width="400" height="400"></canvas>
+        <!--画布-->
+        <br>
+        <input class="btn_begin" type="button" value="开始" onclick="begin()" />
+        <!--开始按钮-->
+        <br>
+        <input class="btn_reset" type="button" value="重新开始" onclick="reset()" />
+        <!--重新开始按钮-->
+
+    </div>
+    <!-- 创建画布 -->
+    <script>
+        //获取画笔
+        var canv = document.getElementById("canv");
+        var ctx = canv.getContext("2d");
+
+        //区分普通对象和函数对象（函数对象可以通过new来创建对象）
+        //构造函数（构造函数的首字母必须大写以来区分普通函数）
+        //同一个构造函数生成的实例对象之间无法共享属性和方法，所以需要通过prototype添加原型的方式来定义对象的共享区域
+        //里面的this对象用来指定将要生成的对象，用new来生成实例对象
+
+        //**************************************************************************
+        //定义蛇的每一节身体，方便吃到食物时创建新的食物
+        //模拟类  行 列 大小
+        //构造函数
+        var Block = function (col, row, size) {
+            this.col = col;
+            this.row = row;
+            this.size = size;
+        };
+        //原型
+        //通过原型为每一个对象添加通用方法
+        //prototype来添加原型链，通过prototype来定义每个对象的公共属性和方法
+        Block.prototype.draw = function () {
+            //ctx.fillStyle = "black";
+            ctx.fillRect(this.col * this.size, this.row * this.size, this.size, this.size); //画蛇的单个身体
+        };
+        //**************************************************************************
+
+        //模拟类  构造函数
+        //定义食物的位置及大小
+        var Food = function (col, row) {
+            this.col = col;
+            this.row = row;
+            this.size = 10;
+        };
+
+        //添加食物类的原型方法   更改颜色
+        Food.prototype.draw = function () {
+            ctx.fillStyle = "red";
+            ctx.fillRect(this.col * this.size, this.row * this.size, this.size, this.size); //画出食物
+        };
+        //构造函数写好后，创建蛇对象，body是数组，用来存蛇的身体，初始方向为向右
+        var snake = {
+            body: [ //实例对象数组
+                new Block(30, 20, 10),
+                new Block(30, 21, 10),
+                new Block(30, 22, 10),
+                new Block(30, 23, 10)
+            ],
+            food: [
+                new Food(Math.floor(Math.random() * 40), Math.floor(Math.random() * 40)), //实例化初始的食物
+            ],
+            direction: "up", //初始化初始方向
+            score: 0, //初始化分数为0
+        };
+
+        //蛇画身体
+        //添加方法（通过循环遍历身体数组，调用身体的draw方法）
+        snake.draw = function () { //包括画蛇的头部 身体  食物
+            //判断开局时生成的食物是否生成到了身体部位
+            for (var k = 1; k < snake.body.length; k++) { //遍历蛇的身体
+                while (this.food[0].col == snake.body[k].col && this.food[0].row == snake.body[k].row) {
+                    var newfood = new Food(Math.floor(Math.random() * 40), Math.floor(Math.random() * 40)); //如果食物恰好在身体上则重新生成一个食物
+                }
+            }
+            //将食物画出来
+            this.food[0].draw(); //如果食物不在身体上则画出食物
+
+            //改变蛇的头部颜色
+            for (var i = 0; i < this.body.length; i++) {
+                if (i == 0) {
+                    ctx.fillStyle = "blue"; //画蛇头的时候变为蓝色
+                } else {
+                    ctx.fillStyle = "black"; //其他部位换回蓝色
+                }
+                this.body[i].draw(); //调用实列中每节身体的draw，画出身体
+            }
+
+        };
+        //添加蛇的移动方法
+        snake.move = function () {
+            //将蛇的头部引入，以便生成移动时改变后的身体
+            var head = snake.body[0];
+
+            if (this.direction == "right") { //判断当前蛇运动的方向
+                var newhead = new Block(head.col + 1, head.row, head.size); //如果方向符合的话，根据方向及当前头部的位置生成下一节的身体，并保存在newhead里
+            } else if (this.direction == "left") {
+                var newhead = new Block(head.col - 1, head.row, head.size);
+            } else if (this.direction == "up") {
+                var newhead = new Block(head.col, head.row - 1, head.size);
+            } else if (this.direction == "down") {
+                var newhead = new Block(head.col, head.row + 1, head.size);
+            }
+
+            //开始判断是否游戏失败
+            //自己撞到自己的情况
+            for (var j = 1; j < snake.body.length; j++) {
+                if (newhead.col == snake.body[j].col && head.row == snake.body[j].row) { //判断下一步是否撞到了自己
+                    clearInterval(time); //如果撞到了自己，清除定时器
+
+                    console.log("GAMEOVER"); //控制台输出GAMEOVER
+                }
+            }
+            //蛇头装到边缘
+            if (newhead.col > 39 || newhead.col < 0 || newhead.row > 39 || newhead.row < 0) {
+                clearInterval(time);
+                var over = document.getElementById("canv").innerHTML = "GAMEOVER";
+
+                console.log("GAMEOVER");
+            } else if ((head.col == this.food[0].col) && (head.row == this.food[0].row)) { //如果吃到了食物，则生成新的食物
+                var newfood = new Food(Math.floor(Math.random() * 40), Math.floor(Math.random() * 40));
+                write_score(10); //更新分数，在上次的基础上加10
+
+                //判断-新生成-的食物是否出现在了身体上
+                for (var k = 0; k < snake.body.length; k++) {
+                    while (newfood.col == snake.body[k].col && head.row == snake.body[k].row) {
+                        var newfood = new Food(Math.floor(Math.random() * 40), Math.floor(Math.random() * 40));
+                    }
+                }
+
+                this.body.unshift(newhead);
+                this.food[0] = newfood;
+                console.log("hh");
+
+            } else {
+                this.body.unshift(newhead);
+                this.body.pop();
+                console.log(this.body[0].col + "  " + this.body[0].row);
+            }
+
+        };
+
+        //默认开局显示及吃到食物时显示分数
+        var write_score = function (num) {
+            snake.score += num;
+            var div_score = document.getElementById("div_score");
+            div_score.innerHTML = "SCORE:" + snake.score;
+        };
+
+        //重新开始按钮功能
+        var reset = function () {
+            clearInterval(time);
+            var newbody = [
+                new Block(30, 20, 10),
+                new Block(30, 21, 10),
+                new Block(30, 22, 10),
+                new Block(30, 23, 10)
+            ];
+            snake.body = newbody;
+            var newfood = [
+                new Food(Math.floor(Math.random() * 40), Math.floor(Math.random() * 40)),
+            ];
+            snake.food = newfood;
+            snake.direction = "up";
+            snake.score = 0;
+            begin();
+        };
+
+        //通过jquery监听键盘事件
+        // $("document").keypress(function(event) {
+        //     if (Keycode == "36") {
+        //         snake.direction == "";
+        //     }
+        // });
+
+        //通过js监听键盘事件
+        snake.control = function () {
+            //var canv = document.getElementById("canv");
+            document.onkeyup = function (event) {
+                var e = event.keyCode || event.which;
+                if (e == 37 && snake.direction != "right") {
+                    snake.direction = "left";
+                } else if (e == 38 && snake.direction != "down") {
+                    snake.direction = "up";
+                } else if (e == 39 && snake.direction != "left") {
+                    snake.direction = "right";
+                } else if (e == 40 && snake.direction != "up") {
+                    snake.direction = "down";
+                } else {
+
+                }
+            }
+        };
+
+
+
+        //设置一个定时器，20毫秒刷新页面
+        var time;
+        var begin = function () {
+            clearInterval(time);
+            time = setInterval(function () {
+                ctx.clearRect(0, 0, 400, 400); //清除指定区域
+                ctx.strokeRect(0, 0, 400, 400); //画矩形
+                snake.draw();
+                snake.control();
+                snake.move();
+                write_score(0); //每次定时分数不加
+
+            }, 280);
+        };
+
+        //time;
+        //同步任务：在主线程上排队执行的任务，只有前一个任务执行完毕，才能执行后一个任务；
+        //异步任务：不进入主线程、而进入"任务队列"的任务，只有"任务队列"通知主线程，某个异步任务可以执行了，
+        //该任务才会进入主线程执行。  
+        //setTimeout方法是异步任务， 它向“任务队列”依次添加执行函数。所以在alert 0的时候，不去点确定，
+        //主线程是被挂起的状态，如果在1秒内点确定会发现顺序就是是正常的，这是由于取消alert阻塞后"任务队列"为2的刚好进入主线程。
+        //如果很久才去点击确定，“任务队列”都进入主线程了，那么js会采用轮询再来处理剩下未执行的代码。
+    </script>
+</body>
+
+</html>
